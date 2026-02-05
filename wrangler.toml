@@ -1,0 +1,208 @@
+# BlackRoad Collab Board - Cloudflare Workers Configuration
+# Agent-driven collaborative development platform
+
+name = "blackroad-collab-board"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Account configuration (set via environment or wrangler login)
+# account_id = "YOUR_ACCOUNT_ID"
+
+# Worker routes
+# routes = [
+#   { pattern = "collab.blackroad.io/*", zone_name = "blackroad.io" }
+# ]
+
+# ============================================
+# Durable Objects - Agent State Management
+# ============================================
+
+[[durable_objects.bindings]]
+name = "AGENT_COORDINATOR"
+class_name = "AgentCoordinator"
+
+[[durable_objects.bindings]]
+name = "JOB_QUEUE"
+class_name = "JobQueue"
+
+[[durable_objects.bindings]]
+name = "REPO_SYNC"
+class_name = "RepoSync"
+
+[[durable_objects.bindings]]
+name = "SELF_HEALER"
+class_name = "SelfHealer"
+
+[[durable_objects.bindings]]
+name = "COLLAB_BOARD"
+class_name = "CollabBoard"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["AgentCoordinator", "JobQueue", "RepoSync", "SelfHealer", "CollabBoard"]
+
+# ============================================
+# KV Namespaces - Fast Key-Value Storage
+# ============================================
+
+[[kv_namespaces]]
+binding = "AGENT_CACHE"
+id = "agent-cache-kv"
+preview_id = "agent-cache-kv-preview"
+
+[[kv_namespaces]]
+binding = "REPO_CACHE"
+id = "repo-cache-kv"
+preview_id = "repo-cache-kv-preview"
+
+[[kv_namespaces]]
+binding = "CONFIG_STORE"
+id = "config-store-kv"
+preview_id = "config-store-kv-preview"
+
+# ============================================
+# R2 Buckets - Large Object Storage
+# ============================================
+
+[[r2_buckets]]
+binding = "ARTIFACTS"
+bucket_name = "blackroad-collab-artifacts"
+preview_bucket_name = "blackroad-collab-artifacts-preview"
+
+# ============================================
+# Queues - Background Job Processing
+# ============================================
+
+[[queues.producers]]
+binding = "JOBS_QUEUE"
+queue = "blackroad-jobs"
+
+[[queues.consumers]]
+queue = "blackroad-jobs"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "blackroad-jobs-dlq"
+
+[[queues.producers]]
+binding = "SYNC_QUEUE"
+queue = "blackroad-sync"
+
+[[queues.consumers]]
+queue = "blackroad-sync"
+max_batch_size = 5
+max_batch_timeout = 60
+max_retries = 5
+
+# ============================================
+# Cron Triggers - Scheduled Tasks
+# ============================================
+
+[triggers]
+crons = [
+  # Sync all repos every 15 minutes
+  "*/15 * * * *",
+  # Health check and self-resolution every 5 minutes
+  "*/5 * * * *",
+  # Deep cohesion analysis every hour
+  "0 * * * *",
+  # Daily cleanup at 3am UTC
+  "0 3 * * *"
+]
+
+# ============================================
+# Environment Variables
+# ============================================
+
+[vars]
+ENVIRONMENT = "development"
+LOG_LEVEL = "debug"
+BLACKROAD_SUITE_VERSION = "2026.1"
+
+# GitHub repos to monitor for cohesion
+MONITORED_REPOS = """
+BlackRoad-OS/blackroad-prism-console
+BlackRoad-OS/blackroad-collab-board
+BlackRoad-OS/blackroad-agent-sdk
+BlackRoad-OS/blackroad-core
+"""
+
+# Self-healing configuration
+SELF_HEAL_ENABLED = "true"
+SELF_HEAL_MAX_RETRIES = "3"
+SELF_HEAL_BACKOFF_MS = "1000"
+
+# Agent configuration
+AGENT_TIMEOUT_MS = "30000"
+AGENT_MAX_CONCURRENT = "10"
+
+# ============================================
+# Secrets (set via wrangler secret put)
+# ============================================
+# Required secrets:
+# - ANTHROPIC_API_KEY: Claude API key for agent intelligence
+# - GITHUB_TOKEN: GitHub PAT for repo access
+# - WEBHOOK_SECRET: GitHub webhook signature verification
+
+# ============================================
+# Staging Environment
+# ============================================
+
+[env.staging]
+name = "blackroad-collab-board-staging"
+vars = { ENVIRONMENT = "staging", LOG_LEVEL = "info" }
+
+[[env.staging.kv_namespaces]]
+binding = "AGENT_CACHE"
+id = "agent-cache-kv-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "REPO_CACHE"
+id = "repo-cache-kv-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "CONFIG_STORE"
+id = "config-store-kv-staging"
+
+# ============================================
+# Production Environment
+# ============================================
+
+[env.production]
+name = "blackroad-collab-board"
+vars = { ENVIRONMENT = "production", LOG_LEVEL = "warn" }
+
+[[env.production.kv_namespaces]]
+binding = "AGENT_CACHE"
+id = "agent-cache-kv-prod"
+
+[[env.production.kv_namespaces]]
+binding = "REPO_CACHE"
+id = "repo-cache-kv-prod"
+
+[[env.production.kv_namespaces]]
+binding = "CONFIG_STORE"
+id = "config-store-kv-prod"
+
+[[env.production.r2_buckets]]
+binding = "ARTIFACTS"
+bucket_name = "blackroad-collab-artifacts-prod"
+
+# ============================================
+# Build Configuration
+# ============================================
+
+[build]
+command = "npm run typecheck"
+
+# ============================================
+# Observability
+# ============================================
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = true
