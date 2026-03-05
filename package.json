@@ -1,0 +1,50 @@
+{
+  "name": "blackroad-collab-board",
+  "version": "1.0.0",
+  "description": "Agent-driven collaborative board with Cloudflare Workers - Part of BlackRoad Product Suite",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "tail": "wrangler tail",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src",
+    "agents:trigger": "wrangler dispatch agent-coordinator",
+    "agents:status": "curl -s $WORKER_URL/agents/status | jq",
+    "sync:repos": "curl -X POST $WORKER_URL/sync/repos",
+    "health": "curl -s $WORKER_URL/health | jq"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "agents",
+    "collaboration",
+    "blackroad",
+    "durable-objects",
+    "real-time"
+  ],
+  "author": "BlackRoad OS <blackroad.systems@gmail.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "hono": "^4.6.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.92.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
